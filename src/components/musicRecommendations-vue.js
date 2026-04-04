@@ -1,6 +1,10 @@
 import VueTree from '@ssthouse/vue-tree-chart'
 
-Vue.component('plugin.music-recommendations', {
+const PLUGIN_NAME = 'music-recommendations'
+
+console.log('[MusicRecommendations] Loading Vue component for:', `plugin.${PLUGIN_NAME}`)
+
+Vue.component(`plugin.${PLUGIN_NAME}`, {
   template: `
     <div>
       <vue-tree-controls
@@ -23,6 +27,7 @@ Vue.component('plugin.music-recommendations', {
         :collapse-enabled="false"
         ref="tree"
         class="tree"
+        @wheel.prevent="handleWheel"
       >
         <template v-slot:node="{ node }">
           <vue-tree-node 
@@ -51,22 +56,33 @@ Vue.component('plugin.music-recommendations', {
     settingsMenuOpen: false
   }),
   async mounted () {
+    console.log('[MusicRecommendations] Component mounted')
     const settings = this.getLocalStorage('settings')
     if (settings) this.settings = settings
 
-    const nowPlayingArtist = await MusicRecommendationsPlugin.getNowPlayingArtist()
-    const localTreeData = this.getLocalStorage('treeData')
+    try {
+      const nowPlayingArtist = await MusicRecommendationsPlugin.getNowPlayingArtist()
+      console.log('[MusicRecommendations] Now playing artist:', nowPlayingArtist)
+      const localTreeData = this.getLocalStorage('treeData')
 
-    // If the local save exists and it's the same artist or there is no artist, use the local save
-    if (localTreeData && (localTreeData.id === nowPlayingArtist.id || !nowPlayingArtist)) {
-      this.treeData = localTreeData
-      this.loadedArtists = MusicRecommendationsPlugin.getAllIds(this.treeData)
+      // If the local save exists and it's the same artist or there is no artist, use the local save
+      if (localTreeData && (localTreeData.id === nowPlayingArtist.id || !nowPlayingArtist)) {
+        console.log('[MusicRecommendations] Using cached tree data')
+        this.treeData = localTreeData
+        this.loadedArtists = MusicRecommendationsPlugin.getAllIds(this.treeData)
 
-    // If no save is loaded, use the now playing artist
-    } else if (nowPlayingArtist) {
-      const artist = await MusicRecommendationsPlugin.getArtist(nowPlayingArtist.id)
-      this.treeData = this.buildNode(artist)
-      this.loadedArtists.add(this.treeData.id)
+      // If no save is loaded, use the now playing artist
+      } else if (nowPlayingArtist) {
+        console.log('[MusicRecommendations] Loading artist:', nowPlayingArtist.id)
+        const artist = await MusicRecommendationsPlugin.getArtist(nowPlayingArtist.id)
+        this.treeData = this.buildNode(artist)
+        this.loadedArtists.add(this.treeData.id)
+        console.log('[MusicRecommendations] Tree data loaded:', this.treeData)
+      } else {
+        console.log('[MusicRecommendations] No artist to display')
+      }
+    } catch (error) {
+      console.error('[MusicRecommendations] Error loading artist:', error)
     }
   },
   watch: {
@@ -132,13 +148,26 @@ Vue.component('plugin.music-recommendations', {
     zoomReset () {
       this.$refs.tree.restoreScale()
     },
+    handleWheel (event) {
+      // Prevent default scroll behavior
+      event.preventDefault()
+      
+      // Determine zoom direction based on wheel delta
+      // deltaY > 0 means scrolling down (zoom out)
+      // deltaY < 0 means scrolling up (zoom in)
+      if (event.deltaY < 0) {
+        this.zoomIn()
+      } else if (event.deltaY > 0) {
+        this.zoomOut()
+      }
+    },
     updateLocalStorage (key, data) {
-      localStorage.setItem(`plugin.${MusicRecommendationsPlugin.PLUGIN_NAME}.${key}`, JSON.stringify(data))
+      localStorage.setItem(`plugin.${PLUGIN_NAME}.${key}`, JSON.stringify(data))
 
       MusicRecommendationsPlugin.debug(`Updated ${key} in localStorage`, data)
     },
     getLocalStorage (key) {
-      const data = localStorage.getItem(`plugin.${MusicRecommendationsPlugin.PLUGIN_NAME}.${key}`)
+      const data = localStorage.getItem(`plugin.${PLUGIN_NAME}.${key}`)
 
       if (data) MusicRecommendationsPlugin.debug(`Loaded ${key} from localStorage`, JSON.parse(data))
       return JSON.parse(data)
@@ -196,24 +225,47 @@ Vue.component('vue-tree-controls', {
     <div class="control-container">
       <button 
         @click="$emit('zoom-in')" 
-        class="control-button icon-zoom-in"
+        class="control-button"
         title="Zoom In"
-      />
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          <line x1="11" y1="8" x2="11" y2="14"></line>
+          <line x1="8" y1="11" x2="14" y2="11"></line>
+        </svg>
+      </button>
       <button 
         @click="$emit('zoom-out')" 
-        class="control-button icon-zoom-out"
+        class="control-button"
         title="Zoom Out"
-      />
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          <line x1="8" y1="11" x2="14" y2="11"></line>
+        </svg>
+      </button>
       <button 
         @click="$emit('zoom-reset')" 
-        class="control-button icon-rotate-ccw"
+        class="control-button"
         title="Reset Zoom"
-      />
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 4 1 10 7 10"></polyline>
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+        </svg>
+      </button>
       <button 
         @click="$emit('open-settings')" 
-        class="control-button icon-settings"
-        title="Open Settings"
-      />
+        class="control-button"
+        title="Settings"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
     </div>
   `
 });

@@ -3,11 +3,22 @@ import { babel } from '@rollup/plugin-babel';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import dotenv from 'dotenv';
+import { homedir } from 'os';
+import path from 'path';
 
 dotenv.config()
 
 const DEV = (process.env.NODE_ENV !== 'production')
-const OUTPUT_DIR = (DEV && process.env.OUTPUT_DIR) ? process.env.OUTPUT_DIR : 'dist'
+
+// Expand ~ to home directory
+const expandPath = (filepath) => {
+  if (filepath && filepath.startsWith('~')) {
+    return path.join(homedir(), filepath.slice(1))
+  }
+  return filepath
+}
+
+const OUTPUT_DIR = process.env.OUTPUT_DIR ? expandPath(process.env.OUTPUT_DIR) : 'dist'
 
 export default {
   input: [
@@ -34,7 +45,13 @@ export default {
         { src: 'README.md', dest: OUTPUT_DIR },
         { src: 'src/styles/musicrecommendation.less', dest: OUTPUT_DIR },
         { src: 'src/assets', dest: OUTPUT_DIR }
-      ]
+      ],
+      hook: 'writeBundle'
     })
-  ]
+  ],
+  watch: {
+    include: 'src/**',
+    exclude: 'node_modules/**',
+    clearScreen: false
+  }
 }

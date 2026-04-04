@@ -1,0 +1,71 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags like v1.0.0, v1.2.3, etc.
+  workflow_dispatch:  # Allows manual trigger
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build plugin
+        run: pnpm build
+        env:
+          NODE_ENV: production
+
+      - name: Create release directory
+        run: |
+          mkdir -p release/music-recommendations
+          cp -r dist/* release/music-recommendations/
+
+      - name: Create ZIP file
+        run: |
+          cd release
+          zip -r music-recommendations.zip music-recommendations/
+          cd ..
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/music-recommendations.zip
+          generate_release_notes: true
+          body: |
+            ## Installation
+            
+            1. Download `music-recommendations.zip`
+            2. Extract the ZIP file
+            3. Copy the `music-recommendations` folder to your Cider plugins directory:
+               - **Windows**: `%APPDATA%\Cider\Plugins\`
+               - **macOS**: `~/Library/Application Support/Cider/Plugins/`
+               - **Linux**: `~/.config/Cider/Plugins/`
+            4. Restart Cider
+            
+            ## What's New
+            
+            See the full changelog below.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

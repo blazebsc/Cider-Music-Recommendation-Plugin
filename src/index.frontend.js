@@ -2,7 +2,10 @@ class MusicRecommendationsFrontend {
   PLUGIN_NAME = 'music-recommendations'
 
   constructor() {
-    CiderFrontAPI.StyleSheets.Add('./plugins/gh_462093451/musicrecommendation.less')
+    console.log('[MusicRecommendations] Initializing frontend plugin')
+    // Use the plugin name to construct the correct path
+    CiderFrontAPI.StyleSheets.Add(`./plugins/${this.PLUGIN_NAME}/musicrecommendation.less`)
+    console.log('[MusicRecommendations] Stylesheet added')
 
     this.menuEntryId = window.uuidv4()
 
@@ -10,9 +13,11 @@ class MusicRecommendationsFrontend {
     menuEntry.Id = this.menuEntryId
     menuEntry.name = "Music Recommendations"
     menuEntry.onClick = ()=>{
-      app.appRoute("plugin/music-recommendations")
+      console.log('[MusicRecommendations] Menu clicked, routing to:', `plugin/${this.PLUGIN_NAME}`)
+      app.appRoute(`plugin/${this.PLUGIN_NAME}`)
     }
     CiderFrontAPI.AddMenuEntry(menuEntry)
+    console.log('[MusicRecommendations] Menu entry added')
   }
 
   async getArtist (id) {

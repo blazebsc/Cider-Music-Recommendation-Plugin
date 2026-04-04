@@ -5,7 +5,7 @@ export default class MusicRecommendationsPlugin {
      * Base Plugin Details (Eventually implemented into a GUI in settings)
      */
     name = 'Music Recommendations';
-    description = 'A template for building Cider plugins using Typescript.';
+    description = 'Provides music recommendations based on a given artist in a fast and easy to read format.';
     version = '1.0.0';
     author = 'Chase Ingebritson';
          
