@@ -44,9 +44,10 @@ Vue.component(`plugin.${PLUGIN_NAME}`, {
   data: () => ({
     treeData: {},
     treeConfig: { 
-      nodeWidth: 250, 
-      nodeHeight: 100, 
-      levelHeight: 350
+      nodeWidth: 300, 
+      nodeHeight: 220, 
+      levelHeight: 500,
+      zoom: 0.15
     },
     loadedArtists: new Set(),
     settings: {
