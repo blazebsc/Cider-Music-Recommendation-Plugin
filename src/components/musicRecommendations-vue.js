@@ -6,7 +6,7 @@ console.log('[MusicRecommendations] Loading Vue component for:', `plugin.${PLUGI
 
 Vue.component(`plugin.${PLUGIN_NAME}`, {
   template: `
-    <div>
+    <div @wheel.prevent="handleWheel">
       <vue-tree-controls
         @zoom-in="zoomIn"
         @zoom-out="zoomOut"
@@ -27,7 +27,6 @@ Vue.component(`plugin.${PLUGIN_NAME}`, {
         :collapse-enabled="false"
         ref="tree"
         class="tree"
-        @wheel.prevent="handleWheel"
       >
         <template v-slot:node="{ node }">
           <vue-tree-node 
