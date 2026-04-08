@@ -111,14 +111,6 @@ pnpm build
 
 This builds and copies all files to `OUTPUT_DIR` (or `dist/` if OUTPUT_DIR is not set).
 
-### Deploy
-
-Deploy to GitHub Pages:
-
-```bash
-pnpm deploy
-```
-
 ## Plugin Structure
 
 After installation, your plugin folder should look like this:
