@@ -4,14 +4,15 @@
   "description": "A Cider Music plugin for providing recommendations based on a given artist in a fast and easy to read format.",
   "type": "module",
   "main": "index.js",
+  "author": "blazebsc",
+  "github_repo": "blazebsc/Cider-Music-Recommendation-Plugin",
+  "license": "ISC",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rollup -c --environment NODE_ENV:production",
     "start": "rollup -c -w --environment NODE_ENV:development",
     "deploy": "pnpm build && gh-pages -b main -d dist"
   },
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "@babel/cli": "^7.28.6",
     "@babel/core": "^7.29.0",
